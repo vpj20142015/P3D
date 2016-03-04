@@ -34,6 +34,8 @@ void renderScene(void)
 
 	//rodar objeto
 	angle += 0.5f;
+
+	glColor3f(1.0, 0.0, 0.0);
 	
 	//Top Left
 	glViewport(0, win_h / 2, win_w / 2, win_h / 2);

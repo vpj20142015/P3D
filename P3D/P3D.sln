@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Exercicio1", "Exercicio1\Ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuatroViewPorts", "QuatroViewPorts\QuatroViewPorts.vcxproj", "{5BAE1E9D-6A60-407B-87AD-044511E8C5D0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Snowman", "Snowman\Snowman.vcxproj", "{BB29811F-FE70-4A3B-BE09-BB6B7BAD2952}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -27,6 +29,10 @@ Global
 		{5BAE1E9D-6A60-407B-87AD-044511E8C5D0}.Debug|Win32.Build.0 = Debug|Win32
 		{5BAE1E9D-6A60-407B-87AD-044511E8C5D0}.Release|Win32.ActiveCfg = Release|Win32
 		{5BAE1E9D-6A60-407B-87AD-044511E8C5D0}.Release|Win32.Build.0 = Release|Win32
+		{BB29811F-FE70-4A3B-BE09-BB6B7BAD2952}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BB29811F-FE70-4A3B-BE09-BB6B7BAD2952}.Debug|Win32.Build.0 = Debug|Win32
+		{BB29811F-FE70-4A3B-BE09-BB6B7BAD2952}.Release|Win32.ActiveCfg = Release|Win32
+		{BB29811F-FE70-4A3B-BE09-BB6B7BAD2952}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

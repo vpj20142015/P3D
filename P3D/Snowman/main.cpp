@@ -27,6 +27,7 @@ void changeSize(int w, int h)
 
 void drawSnowMan(){
 
+	glColor3ub(rand() % 255, rand() % 255, rand() % 255);
 	//Barriga
 	glTranslatef(0.0, 0.75, 0.0);
 	glutWireSphere(0.75, 20.0, 20.0);
@@ -34,6 +35,34 @@ void drawSnowMan(){
 	//Cabeça
 	glTranslatef(0.0, 1.0, 0.0);
 	glutWireSphere(0.25, 20.0, 20.0);
+
+	//desenha olhos
+	glPushMatrix();
+	glColor3f(0.3f, 0.3f, 0.3f);
+	glTranslatef(0.05f, 0.1f, 0.18f);
+	glutSolidSphere(0.05f, 10, 10);
+	glTranslatef(-0.1f, 0.0f, 0.0f);
+	glutSolidSphere(0.05f, 10, 10);
+	glPopMatrix();
+
+	//nariz
+	glColor3f(1.0, 0.0, 0.0);
+	glTranslatef(0.0, 0.0, 0.25);
+	glRotatef(0, 0.0, 1.0, 0.0);
+	glutSolidCone(0.05, 0.5, 10, 2);
+}
+
+void drawSnowmanMatrix(){
+	glColor3f(1.0, 1.0, 1.0);
+	for (int i = 0; i < 20; i+= 2){
+		for (int j = 0; j < 20; j+= 2){
+			glLoadIdentity();
+			glPushMatrix();
+			glTranslatef(i, 0, j);
+			drawSnowMan();
+			glPopMatrix();
+		}
+	}
 }
 
 void renderScene(void)
@@ -43,20 +72,18 @@ void renderScene(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
-	glColor3f(1.0, 0.0, 0.0);
+	glColor3f(1.0, 1.0, 1.0);
 
 	//Top Left
 	glViewport(0, 0, win_w, win_h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, ratio, 1, 1000);
-	gluLookAt(1.0, 3.0, 5.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0);
+	gluLookAt(20.0, 12.0, 35.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0);
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 
-	//desenhar o snowman
-	drawSnowMan();
-
+	drawSnowmanMatrix();
+	
 	// Troca os buffers, mostrando o que acabou de ser desenhado
 	glutSwapBuffers();
 }

@@ -9,12 +9,8 @@ void renderScene(void){
 	height = glutGet(GLUT_WINDOW_HEIGHT);
 	glViewport(0.0, 0.0, width, height);
 
-
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	
-	
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -27,7 +23,7 @@ void renderScene(void){
 	glRasterPos2d(10.0f, 20.0f);
 	glColor3f(1.0f, 1.0f, 1.0f);
 
-	for (i = 0; i < strlen(str); i++) glutBitmapCharacter(GLUT_BITMAP_8_BY_13, str[i]);
+	for (i = 0; i < strlen(str); i++) glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, str[i]);
 	glFlush();
 }
 

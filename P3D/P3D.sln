@@ -23,6 +23,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TextoCantoSuperiorEsquerdo"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TextoStrokeCharacter", "TextoStrokeCharacter\TextoStrokeCharacter.vcxproj", "{C4C99718-AD85-45BA-80DA-FB4AFF59D82A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Modelos3D", "Modelos3D\Modelos3D.vcxproj", "{DD6C69E4-A9A1-49E2-A226-D6FAED3D9293}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -69,6 +71,10 @@ Global
 		{C4C99718-AD85-45BA-80DA-FB4AFF59D82A}.Debug|Win32.Build.0 = Debug|Win32
 		{C4C99718-AD85-45BA-80DA-FB4AFF59D82A}.Release|Win32.ActiveCfg = Release|Win32
 		{C4C99718-AD85-45BA-80DA-FB4AFF59D82A}.Release|Win32.Build.0 = Release|Win32
+		{DD6C69E4-A9A1-49E2-A226-D6FAED3D9293}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DD6C69E4-A9A1-49E2-A226-D6FAED3D9293}.Debug|Win32.Build.0 = Debug|Win32
+		{DD6C69E4-A9A1-49E2-A226-D6FAED3D9293}.Release|Win32.ActiveCfg = Release|Win32
+		{DD6C69E4-A9A1-49E2-A226-D6FAED3D9293}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

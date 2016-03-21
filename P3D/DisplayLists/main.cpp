@@ -20,11 +20,8 @@ int bitmapHeight = 13;
 int frame, time, timebase = 0;
 char s[30];
 int mainWindow, subWindow1, subWindow2, subWindow3;
-
-
-
-
 GLMmodel* pmodel = NULL;
+GLuint displayListID;
 
 
 void loadmodel(void)
@@ -90,6 +87,7 @@ void changeSize(int w1, int h1)
 
 void drawSnowMan()
 {
+
 	glColor3f(1.0f, 1.0f, 1.0f);
 
 	// Draw Body	
@@ -161,11 +159,23 @@ void renderBitmapString(float x, float y, void *font, char *string)
 	}
 }
 
+GLuint createDisplayLists(){
+	GLuint bonecosDL;
+	bonecosDL = glGenLists(1);
+
+	glNewList(bonecosDL, GL_COMPILE);
+	drawSnowMan();
+	glEndList();
+
+	return bonecosDL;
+}
+
 
 void initScene(void)
 {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	displayListID = createDisplayLists();
 }
 
 
@@ -181,7 +191,6 @@ void moveMeFlat(int i)
 	x = x + i * (lx)* 0.1;
 	z = z + i * (lz)* 0.1;
 }
-
 
 void renderScene2(int currentWindow)
 {
@@ -221,7 +230,7 @@ void renderScene2(int currentWindow)
 		{
 			glPushMatrix();
 			glTranslatef(i*10.0, 0, j*10.0);
-			drawSnowMan();
+			glCallList(displayListID);
 			glPopMatrix();
 		}
 	}

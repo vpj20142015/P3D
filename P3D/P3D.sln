@@ -27,6 +27,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Modelos3D", "Modelos3D\Mode
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiWindowsPorsche", "MultiWindowsPorsche\MultiWindowsPorsche.vcxproj", "{16289622-B7FC-4C90-9EC1-A466AC3C5E65}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DisplayLists", "DisplayLists\DisplayLists.vcxproj", "{C323216E-D6C4-4977-913A-993AA45F12A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -81,6 +83,10 @@ Global
 		{16289622-B7FC-4C90-9EC1-A466AC3C5E65}.Debug|Win32.Build.0 = Debug|Win32
 		{16289622-B7FC-4C90-9EC1-A466AC3C5E65}.Release|Win32.ActiveCfg = Release|Win32
 		{16289622-B7FC-4C90-9EC1-A466AC3C5E65}.Release|Win32.Build.0 = Release|Win32
+		{C323216E-D6C4-4977-913A-993AA45F12A9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C323216E-D6C4-4977-913A-993AA45F12A9}.Debug|Win32.Build.0 = Debug|Win32
+		{C323216E-D6C4-4977-913A-993AA45F12A9}.Release|Win32.ActiveCfg = Release|Win32
+		{C323216E-D6C4-4977-913A-993AA45F12A9}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

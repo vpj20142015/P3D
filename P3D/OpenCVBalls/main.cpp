@@ -480,7 +480,7 @@ void display()
 
 	//gluPerspective is arbitrarily set, you will have to determine these values based
 	//on the intrinsic camera parameters
-	gluPerspective(60, width / height, 0.1, 100);
+	gluPerspective(60 - circleRadius / 5, width / height, 0.1, 100);
 
 	//you will have to set modelview matrix using extrinsic camera params
 	glMatrixMode(GL_MODELVIEW);

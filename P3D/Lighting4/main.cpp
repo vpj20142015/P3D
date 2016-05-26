@@ -68,6 +68,10 @@ void init(void)
 	// Activa o teste de profundidade
 	glEnable(GL_DEPTH_TEST);
 
+	glClearDepth(0.0);
+
+	glDepthFunc(GL_LEQUAL);
+
 	// Compila o modelo
 	funcmyDL();
 }

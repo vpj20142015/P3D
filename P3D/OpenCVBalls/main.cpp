@@ -21,7 +21,7 @@ const int accumulatorThresholdInitialValue = 35;
 const int maxAccumulatorThreshold = 200;
 const int maxCannyThreshold = 255;
 
-Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped;
+Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2;
 
 Ptr<BackgroundSubtractor> pMOG; //MOG Background subtractor
 
@@ -43,6 +43,11 @@ Point circleCenter = Point(0, 0);
 int circleRadius = 2;
 
 int myDL;
+
+//Modos existentes: position tracking e augmented reality
+int demoModes = 2;
+//Modo current
+int demoMode = 0;
 
 void draw_mesh(int xmin, int xmax, int zmin, int zmax)
 {
@@ -459,11 +464,6 @@ void display()
 		cout << "No frame captured!" << endl;
 	}
 
-	/*Mat tempimage, tempimage2;
-	flip(frameOriginal, tempimage, 0);
-	flip(tempimage, tempimage2, 1);
-	glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());*/
-
 	//////////////////////////////////////////////////////////////////////////////////
 	// Here, set up new parameters to render a scene viewed from the camera.
 
@@ -484,39 +484,50 @@ void display()
 	glLoadIdentity();
 	gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
 
+	float zoomRange = 0;
+	switch (demoMode)
+	{
+	case 0:
+		/////////////////////////////////////////////////////////////////////////////////
+		// Drawing routine
 
-	/////////////////////////////////////////////////////////////////////////////////
-	// Drawing routine
+		//now that the camera params have been set, draw your 3D shapes
+		//first, save the current matrix
+		glPushMatrix();
 
-	//now that the camera params have been set, draw your 3D shapes
-	//first, save the current matrix
-	glPushMatrix();
+		zoomRange = RangeAToRangeB((float)circleRadius, 20, 150, 0, 10, 1);
 
-	float zoomRange = RangeAToRangeB((float)circleRadius, 20, 150, 0, 10, 1);
-
-	//move to the position where you want the 3D object to go
-	glTranslatef(RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, 100.0),
-		RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, 50.0),
-		zoomRange);
+		//move to the position where you want the 3D object to go
+		glTranslatef(RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, 100.0),
+			RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, 50.0),
+			zoomRange);
 
 
-	// Floor
-	glCallList(myDL);
+		// Floor
+		glCallList(myDL);
 
-	drawAxes(1.0);
+		drawAxes(1.0);
 
-	applylights();
+		applylights();
 
-	glTranslatef(-2, 0, 0);
-	
-	glutSolidTeapot(0.5);
+		glTranslatef(-2, 0, 0);
 
-	glTranslatef(4, 0, 0);
+		glutSolidTeapot(0.5);
 
-	glutSolidTeacup(0.5);
+		glTranslatef(4, 0, 0);
 
-	glPopMatrix();
+		glutSolidTeacup(0.5);
 
+		glPopMatrix();
+		break;
+	case 1:
+		flip(frameOriginal, tempimage, 0);
+		flip(tempimage, tempimage2, 1);
+		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
+		break;
+	default:
+		break;
+	}
 
 	// show the rendering on the screen
 	glutSwapBuffers();
@@ -547,7 +558,12 @@ void keyboard(unsigned char key, int x, int y)
 		// quit when q is pressed
 		exit(0);
 		break;
-
+	case 'm' :
+		demoMode += 1;
+		if (demoMode >= demoModes){
+			demoMode = 0;
+		}
+		break;
 	default:
 		break;
 	}

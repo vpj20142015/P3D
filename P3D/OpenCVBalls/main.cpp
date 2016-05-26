@@ -382,9 +382,6 @@ void HoughDetection(Mat& src_gray, Mat& src_display)
 			circleRadius = (int)radius[largest_contour_index];
 		}
 	}
-	else{
-		cout << "Contours not found!" << endl;
-	}
 
 	///HoughDetection - Slow and unreliable
 

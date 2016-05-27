@@ -16,12 +16,6 @@ using namespace std;
 // windows and trackbars name
 const std::string usage = "Usage : tutorial_HoughCircle_Demo <path_to_input_image>\n";
 
-// initial and max values of the parameters of interests.
-const int cannyThresholdInitialValue = 255;
-const int accumulatorThresholdInitialValue = 35;
-const int maxAccumulatorThreshold = 200;
-const int maxCannyThreshold = 255;
-
 Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2;
 
 Ptr<BackgroundSubtractor> pMOG; //MOG Background subtractor
@@ -32,7 +26,7 @@ int iHighH = 179;
 int iLowS = 133;
 int iHighS = 250;
 
-int iLowV = 120;
+int iLowV = 180;
 int iHighV = 255;
 
 bool frameCapturedSuccessfully = false;
@@ -51,30 +45,34 @@ int demoModes = 2;
 int demoMode = 1;
 
 tgaInfo *im;
-GLuint texture;
+GLuint textureEarth, textureMoon;
 GLUquadric *mysolid;
 GLfloat spin = 0.05;
+float planetCenterX = 0, planetCenterY = 0;
+float raioOrbita = 0.1;
+float periodoOrbital = 1.0;
+float moonOrbitIterator = 0;
+GLuint textures[2];
 
-void load_tga_image(void)
+void load_tga_image(std::string nome, GLuint texture, bool transparency)
 {
-	char impathfile[255] = "textures/earth.tga";
+	std::string impathfile = "textures/" + nome + ".tga";
+
+	std::vector<char> writable(impathfile.begin(), impathfile.end());
+	writable.push_back('\0');
 
 	// Carrega a imagem de textura
-	im = tgaLoad(impathfile);
+	im = tgaLoad(&writable[0]);
+	//printf("IMAGE INFO: %s\nstatus: %d\ntype: %d\npixelDepth: %d\nsize%d x %d\n", impathfile, im->status, im->type, im->pixelDepth, im->width, im->height);
 
-	printf("IMAGE INFO: %s\nstatus: %d\ntype: %d\npixelDepth: %d\nsize%d x %d\n", impathfile, im->status, im->type, im->pixelDepth, im->width, im->height);
-
-	// allocate one texture name
-	glGenTextures(1, &texture);
-
-	// select our current texture
+	// Seleciona a textura atual
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	//	// set up quadric object and turn on FILL draw style for it
+	// set up quadric object and turn on FILL draw style for it
 	mysolid = gluNewQuadric();
 	gluQuadricDrawStyle(mysolid, GLU_FILL);
 
-	//	// turn on texture coordinate generator for the quadric
+	// turn on texture coordinate generator for the quadric
 	gluQuadricTexture(mysolid, GL_TRUE);
 
 	// select modulate to mix texture with color for shading
@@ -85,8 +83,16 @@ void load_tga_image(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// build our texture mipmaps
-	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, im->width, im->height, GL_RGB, GL_UNSIGNED_BYTE, im->imageData); // MIPMAP
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGB, GL_UNSIGNED_BYTE, im->imageData);
+	if (!transparency){
+		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, im->width, im->height, GL_RGB, GL_UNSIGNED_BYTE, im->imageData); // MIPMAP
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, im->width, im->height, 0, GL_RGB, GL_UNSIGNED_BYTE, im->imageData);
+	}
+	else{
+		//Textura com transparência (anéis de saturno)
+		gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, im->width, im->height, GL_RGB, GL_UNSIGNED_BYTE, im->imageData); // MIPMAP
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, im->imageData);
+	}
+
 
 	// Destroi a imagem
 	tgaDestroy(im);
@@ -145,7 +151,6 @@ void applymaterial(int type)
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[type]);
 	}
 }
-
 
 void floorAndWallsDL(void)
 {
@@ -301,7 +306,6 @@ void initLights(void)
 	glEnable(GL_LIGHT1);
 }
 
-
 void applylights(void)
 {
 	// Define a posição de light0
@@ -336,8 +340,6 @@ void init(void)
 	floorAndWallsDL();
 }
 
-
-// a useful function for displaying your coordinate system
 void drawAxes(float length)
 {
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
@@ -500,6 +502,8 @@ void display()
 
 
 	float zoomRange = 0;
+	float x = 0, y = 0, z = 0;
+	float raioOrbitaAtual = 0;
 	switch (demoMode)
 	{
 	case 0:
@@ -563,12 +567,14 @@ void display()
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho((float)width / (float)height, (float)-width / (float)height, -1, 1, 0.1, 1000);
+		glOrtho((float)width / (float)height, (float)-width / (float)height, -1, 1, -100, 100);
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 
 		glColor4f(1.0, 1.0, 1.0, 1.0);
+
+		glBindTexture(GL_TEXTURE_2D, textures[0]);
 
 		applymaterial(0);
 
@@ -577,19 +583,60 @@ void display()
 		// Draw sphere
 		glPushMatrix();
 
+		planetCenterX = RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, width / 2.65);
+		planetCenterY = -RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, height / 2.0);
+
 		//move to the position where you want the 3D object to go
-		glTranslatef(RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, width / 2.65),
-			-RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, height / 2.0), 0);
-		glRotatef(spin, 0.0, 1.0, 0.0);
-		glRotatef(-90, 1.0, 0.0, 0.0);
-		glRotatef(23, 1.0, 0.0, 0.0);
+		glTranslatef(planetCenterX, planetCenterY, 0);
+		glRotatef(-spin, 0.0, 1.0, 0.0);
+		//Endireitar os planetas
+		glRotatef(-90.0, 1.0, 0.0, 0.0);
 		gluSphere(mysolid, circleRadius / (height / 2.0), 100, 100);
+
+		glPopMatrix();
+		glPushMatrix();
+
+		glBindTexture(GL_TEXTURE_2D, textures[1]);
+
+		applymaterial(0);
+
+		applylights();
+
+		raioOrbitaAtual = raioOrbita + (circleRadius / 100.0);
+		//Cálculo do movimento de translação do planeta em volta do sol
+		x = planetCenterX + raioOrbitaAtual * sin(moonOrbitIterator / 180.0 * 3.14);
+		y = planetCenterY;// *cos(moonOrbitIterator / 180.0 * 3.14);
+		z = circleRadius / (height / 2.0) + raioOrbitaAtual * cos(moonOrbitIterator / 180.0 * 3.14);
+
+		//Esta linha define a velocidade orbital
+		moonOrbitIterator += 3.14 * 2 / (periodoOrbital);
+		if (moonOrbitIterator >= 360)
+		{
+			//Demos uma volta completa ao planeta (um ano)
+			moonOrbitIterator = 0;
+		}
+
+		glTranslatef(
+			x,
+			y,
+			z);
+
+		//Endireitar os planetas
+		glRotatef(-90.0, 1.0, 0.0, 0.0);
+
+		//Rotação sobre si próprio
+		//glRotatef(_rotacaoAtual, 0.0, 1.0, 0.0);
+
+		//Endireitar os planetas
+		//glRotatef(-90.0, 1.0, 0.0, 0.0);
+
+		gluSphere(mysolid, (circleRadius / (height / 2.0)) / 2.0, 64, 64);
+
 		glPopMatrix();
 
 		spin = spin + 2;
 		if (spin > 360.0) spin = spin - 360.0;
 
-		glPopMatrix();
 		break;
 	default:
 		break;
@@ -671,9 +718,11 @@ int main(int argc, char** argv)
 	glutCreateWindow("OpenGL / OpenCV Example");
 
 	// Inicializações
-	load_tga_image();
 	init();
 	initLights();
+	glGenTextures(2, textures);
+	load_tga_image("earth", textures[0], false);
+	load_tga_image("moon", textures[1], false);
 
 	// set up GUI callback functions
 	glutDisplayFunc(display);

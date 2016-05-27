@@ -317,22 +317,6 @@ void applylights(void)
 	glLightfv(GL_LIGHT1, GL_POSITION, spot_position);
 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spot_direction);
 
-	glDisable(GL_LIGHTING);
-
-	//// Desenha uma esfera que sinaliza a posição da light0
-	//glPushMatrix();
-	//glColor3f(1.0, 1.0, 1.0);
-	//glTranslatef(0.0f, 3.0f, 0.0f);
-	//glutSolidSphere(0.1, 20, 20);
-	//glPopMatrix();
-
-	//// Desenha uma esfera que sinaliza a posição da light1
-	//glPushMatrix();
-	//glColor3f(1.0, 1.0, 1.0);
-	//glTranslatef(0.0f, 3.0f, -10.0f);
-	//glutSolidSphere(0.1, 20, 20);
-	//glPopMatrix();
-
 	glEnable(GL_LIGHTING);
 }
 
@@ -423,7 +407,7 @@ void HoughDetection(Mat& src_gray, Mat& src_display)
 		}*/
 		if ((int)radius[largest_contour_index] > 15)
 		{
-			circle(src_display, center[largest_contour_index], (int)radius[largest_contour_index], Scalar(0, 0, 255), 2, 8, 0);
+			circle(src_display, center[largest_contour_index], (int)radius[largest_contour_index], Scalar(255, 0, 0), 2, 8, 0);
 			circle(src_display, center[largest_contour_index], 5, Scalar(255, 0, 0), -1);
 
 			circleCenter = center[largest_contour_index];
@@ -514,26 +498,6 @@ void display()
 	//glViewport(0, 0, frameFlipped.size().width, frameFlipped.size().height);
 	glViewport(0, 0, width, height);
 
-	//set projection matrix using intrinsic camera params
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	//gluPerspective is arbitrarily set, you will have to determine these values based
-	//on the intrinsic camera parameters
-	
-	if (demoMode == 0){
-		//FPV, zoom afeta FOV
-		gluPerspective(60 - circleRadius / 5, width / height, 0.1, 100);
-	}
-	else{
-		gluPerspective(45, width / height, 0.1, 100);
-	}
-	
-
-	//you will have to set modelview matrix using extrinsic camera params
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
 
 	float zoomRange = 0;
 	switch (demoMode)
@@ -546,6 +510,17 @@ void display()
 		//first, save the current matrix
 
 		glDisable(GL_TEXTURE_2D);
+
+		//set projection matrix using intrinsic camera params
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		//FPV, zoom afeta FOV
+		gluPerspective(60 - circleRadius / 5, width / height, 0.1, 100);
+
+		//you will have to set modelview matrix using extrinsic camera params
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
 
 		glPushMatrix();
 
@@ -575,6 +550,9 @@ void display()
 		glPopMatrix();
 		break;
 	case 1:
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		flip(frameOriginal, tempimage, 0);
 		flip(tempimage, tempimage2, 1);
 		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
@@ -582,6 +560,13 @@ void display()
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glEnable(GL_TEXTURE_2D);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho((float)width / (float)height, (float)-width / (float)height, -1, 1, 0.1, 1000);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 
@@ -591,14 +576,15 @@ void display()
 		glPushMatrix();
 
 		//move to the position where you want the 3D object to go
-		glTranslatef(-RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, 100.0),
-			-RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, 50.0), 0);
-		glRotatef(-90, 1.0, 0.0, 0.0);
+		glTranslatef(RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, width / 2.65),
+			-RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, height / 2.0), 0);
 		glRotatef(spin, 0.0, 1.0, 0.0);
-		gluSphere(mysolid, circleRadius / 75.0, 100, 100);
+		glRotatef(-90, 1.0, 0.0, 0.0);
+		glRotatef(23, 1.0, 0.0, 0.0);
+		gluSphere(mysolid, circleRadius / (height / 2.0), 100, 100);
 		glPopMatrix();
 
-		spin = spin + 0.3;
+		spin = spin + 2;
 		if (spin > 360.0) spin = spin - 360.0;
 
 		glPopMatrix();

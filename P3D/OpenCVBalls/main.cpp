@@ -6,6 +6,7 @@
 #include "Dependencies\glew\glew.h"
 #include "Dependencies\freeglut\freeglut.h"
 #include <math.h>
+#include "tga.h"
 
 #define _DMESH
 
@@ -47,7 +48,49 @@ int myDL;
 //Modos existentes: position tracking e augmented reality
 int demoModes = 2;
 //Modo current
-int demoMode = 0;
+int demoMode = 1;
+
+tgaInfo *im;
+GLuint texture;
+GLUquadric *mysolid;
+GLfloat spin = 0.05;
+
+void load_tga_image(void)
+{
+	char impathfile[255] = "textures/earth.tga";
+
+	// Carrega a imagem de textura
+	im = tgaLoad(impathfile);
+
+	printf("IMAGE INFO: %s\nstatus: %d\ntype: %d\npixelDepth: %d\nsize%d x %d\n", impathfile, im->status, im->type, im->pixelDepth, im->width, im->height);
+
+	// allocate one texture name
+	glGenTextures(1, &texture);
+
+	// select our current texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	//	// set up quadric object and turn on FILL draw style for it
+	mysolid = gluNewQuadric();
+	gluQuadricDrawStyle(mysolid, GLU_FILL);
+
+	//	// turn on texture coordinate generator for the quadric
+	gluQuadricTexture(mysolid, GL_TRUE);
+
+	// select modulate to mix texture with color for shading
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // MIPMAP
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// build our texture mipmaps
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, im->width, im->height, GL_RGB, GL_UNSIGNED_BYTE, im->imageData); // MIPMAP
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im->width, im->height, 0, GL_RGB, GL_UNSIGNED_BYTE, im->imageData);
+
+	// Destroi a imagem
+	tgaDestroy(im);
+}
 
 void draw_mesh(int xmin, int xmax, int zmin, int zmax)
 {
@@ -264,7 +307,7 @@ void applylights(void)
 	// Define a posição de light0
 	GLfloat light0_position[] = { 0.0f, 3.0f, 0.0f, 1.0f };
 	// Define a posição de direcção de light1
-	GLfloat spot_position[] = { 0.0f, 3.0f, -10.0f, 1.0f };
+	GLfloat spot_position[] = { 0.0f, 3.0f, -5.0f, 1.0f };
 	GLfloat spot_direction[] = { 0.0f, -1.0f, 0.0f };
 
 	// Aplica a light0
@@ -276,19 +319,19 @@ void applylights(void)
 
 	glDisable(GL_LIGHTING);
 
-	// Desenha uma esfera que sinaliza a posição da light0
-	glPushMatrix();
-	glColor3f(1.0, 1.0, 1.0);
-	glTranslatef(0.0f, 3.0f, 0.0f);
-	glutSolidSphere(0.1, 20, 20);
-	glPopMatrix();
+	//// Desenha uma esfera que sinaliza a posição da light0
+	//glPushMatrix();
+	//glColor3f(1.0, 1.0, 1.0);
+	//glTranslatef(0.0f, 3.0f, 0.0f);
+	//glutSolidSphere(0.1, 20, 20);
+	//glPopMatrix();
 
-	// Desenha uma esfera que sinaliza a posição da light1
-	glPushMatrix();
-	glColor3f(1.0, 1.0, 1.0);
-	glTranslatef(0.0f, 3.0f, -10.0f);
-	glutSolidSphere(0.1, 20, 20);
-	glPopMatrix();
+	//// Desenha uma esfera que sinaliza a posição da light1
+	//glPushMatrix();
+	//glColor3f(1.0, 1.0, 1.0);
+	//glTranslatef(0.0f, 3.0f, -10.0f);
+	//glutSolidSphere(0.1, 20, 20);
+	//glPopMatrix();
 
 	glEnable(GL_LIGHTING);
 }
@@ -477,7 +520,15 @@ void display()
 
 	//gluPerspective is arbitrarily set, you will have to determine these values based
 	//on the intrinsic camera parameters
-	gluPerspective(60 - circleRadius / 5, width / height, 0.1, 100);
+	
+	if (demoMode == 0){
+		//FPV, zoom afeta FOV
+		gluPerspective(60 - circleRadius / 5, width / height, 0.1, 100);
+	}
+	else{
+		gluPerspective(45, width / height, 0.1, 100);
+	}
+	
 
 	//you will have to set modelview matrix using extrinsic camera params
 	glMatrixMode(GL_MODELVIEW);
@@ -493,6 +544,9 @@ void display()
 
 		//now that the camera params have been set, draw your 3D shapes
 		//first, save the current matrix
+
+		glDisable(GL_TEXTURE_2D);
+
 		glPushMatrix();
 
 		zoomRange = RangeAToRangeB((float)circleRadius, 20, 150, 0, 10, 1);
@@ -524,6 +578,30 @@ void display()
 		flip(frameOriginal, tempimage, 0);
 		flip(tempimage, tempimage2, 1);
 		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		glEnable(GL_TEXTURE_2D);
+
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+
+		applylights();
+
+		// Draw sphere
+		glPushMatrix();
+
+		//move to the position where you want the 3D object to go
+		glTranslatef(-RangeAToRangeB((float)circleCenter.x, 0.0, (float)width, -width / 2.0, width / 2.0, 100.0),
+			-RangeAToRangeB((float)circleCenter.y, 0.0, (float)height, -height / 2.0, height / 2.0, 50.0), 0);
+		glRotatef(-90, 1.0, 0.0, 0.0);
+		glRotatef(spin, 0.0, 1.0, 0.0);
+		gluSphere(mysolid, circleRadius / 75.0, 100, 100);
+		glPopMatrix();
+
+		spin = spin + 0.3;
+		if (spin > 360.0) spin = spin - 360.0;
+
+		glPopMatrix();
 		break;
 	default:
 		break;
@@ -599,12 +677,13 @@ int main(int argc, char** argv)
 
 	// initialize GLUT
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("OpenGL / OpenCV Example");
 
 	// Inicializações
+	load_tga_image();
 	init();
 	initLights();
 

@@ -265,7 +265,7 @@ void initLights(void)
 	GLfloat global_ambient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	// Define a luz light0. Existem 8 fontes de luz no total.
 	GLfloat light0_ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	GLfloat light0_diffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	GLfloat light0_diffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
 	GLfloat light0_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	// Define a luz light1. Existem 8 fontes de luz no total.
 	GLfloat light1_ambient[] = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -569,6 +569,8 @@ void display()
 		glLoadIdentity();
 
 		glColor4f(1.0, 1.0, 1.0, 1.0);
+
+		applymaterial(0);
 
 		applylights();
 

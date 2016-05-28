@@ -13,9 +13,6 @@
 using namespace cv;
 using namespace std;
 
-// windows and trackbars name
-const std::string usage = "Usage : tutorial_HoughCircle_Demo <path_to_input_image>\n";
-
 Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2;
 
 Ptr<BackgroundSubtractor> pMOG; //MOG Background subtractor

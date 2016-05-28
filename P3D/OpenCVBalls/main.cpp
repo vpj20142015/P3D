@@ -51,6 +51,10 @@ float periodoOrbital = 1.0;
 float moonOrbitIterator = 0;
 GLuint textures[2];
 
+//Usado para implementar um rolling moving average de modo a limpar o sinal 
+float newValuesWeight = 1.0;
+float accumulatorX = 0, accumulatorY = 0, accumulatorZ = 0;
+
 void load_tga_image(std::string nome, GLuint texture, bool transparency)
 {
 	std::string impathfile = "textures/" + nome + ".tga";
@@ -399,18 +403,44 @@ void HoughDetection(Mat& src_gray, Mat& src_display)
 		approxPolyDP(Mat(contours[largest_contour_index]), contours_poly[largest_contour_index], 3, true);
 		minEnclosingCircle((Mat)contours_poly[largest_contour_index], center[largest_contour_index], radius[largest_contour_index]);
 
-		//DEBUG - desenhar contornos
+		//Encontramos um circulo
 		/*for (int i = 0; i< contours.size(); i++)
 		{
 		drawContours(src_display, contours_poly, i, Scalar(0, 0, 0), 1, 8, vector<Vec4i>(), 0, Point());
 		}*/
 		if ((int)radius[largest_contour_index] > 15)
 		{
-			circle(src_display, center[largest_contour_index], (int)radius[largest_contour_index], Scalar(255, 0, 0), 2, 8, 0);
-			circle(src_display, center[largest_contour_index], 5, Scalar(255, 0, 0), -1);
+			/*circle(src_display, center[largest_contour_index], (int)radius[largest_contour_index], Scalar(255, 0, 0), 2, 8, 0);
+			circle(src_display, center[largest_contour_index], 5, Scalar(255, 0, 0), -1);*/
 
-			circleCenter = center[largest_contour_index];
-			circleRadius = (int)radius[largest_contour_index];
+			switch (demoMode)
+			{
+			case 0:{
+				newValuesWeight = 0.4;
+				//Positional Tracking
+				accumulatorX = (newValuesWeight * center[largest_contour_index].x) + (1.0 - newValuesWeight) * accumulatorX;
+				accumulatorY = (newValuesWeight * center[largest_contour_index].y) + (1.0 - newValuesWeight) * accumulatorY;
+				accumulatorZ = (newValuesWeight * (int)radius[largest_contour_index]) + (1.0 - newValuesWeight) * accumulatorZ;
+				circleCenter = Point(accumulatorX, accumulatorY);
+				circleRadius = accumulatorZ;
+				break;
+			}
+			case 1:{
+				//Realidade aumentada, planeta por cima da bola
+				//X e Y acompanham instantaneamente, limpamos o ruido do raio do planeta
+				newValuesWeight = 1.0;
+				accumulatorX = (newValuesWeight * center[largest_contour_index].x) + (1.0 - newValuesWeight) * accumulatorX;
+				accumulatorY = (newValuesWeight * center[largest_contour_index].y) + (1.0 - newValuesWeight) * accumulatorY;
+				circleCenter = Point(accumulatorX, accumulatorY);
+				newValuesWeight = 0.8;
+				accumulatorZ = (newValuesWeight * (int)radius[largest_contour_index]) + (1.0 - newValuesWeight) * accumulatorZ;
+				circleRadius = accumulatorZ;
+				break;
+			}
+			default:
+				break;
+			}
+
 		}
 	}
 
@@ -675,6 +705,9 @@ void keyboard(unsigned char key, int x, int y)
 		if (demoMode >= demoModes){
 			demoMode = 0;
 		}
+		accumulatorX = 0;
+		accumulatorY = 0;
+		accumulatorZ = 0;
 		break;
 	default:
 		break;

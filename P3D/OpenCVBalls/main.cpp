@@ -557,13 +557,13 @@ void display()
 
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glDisable(GL_TEXTURE_2D);
+
 		flip(frameOriginal, tempimage, 0);
 		flip(tempimage, tempimage2, 1);
 		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
 
 		glClear(GL_DEPTH_BUFFER_BIT);
-
-		glEnable(GL_TEXTURE_2D);
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -571,6 +571,8 @@ void display()
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
+
+		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 

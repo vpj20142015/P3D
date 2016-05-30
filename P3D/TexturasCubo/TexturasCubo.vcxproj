@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{49119553-6006-4A6E-BF09-95A6432BFE29}</ProjectGuid>
-    <RootNamespace>MultiWindows</RootNamespace>
+    <ProjectGuid>{72209AAA-0002-410F-9C56-88DA6A818808}</ProjectGuid>
+    <RootNamespace>TexturasCubo</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -44,7 +44,6 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -67,11 +66,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\MultiWindowsPorsche\glm.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="tga.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\MultiWindowsPorsche\glm.h" />
+    <ClInclude Include="tga.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

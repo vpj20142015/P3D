@@ -18,12 +18,12 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\MultiWindowsPorsche\glm.cpp">
+    <ClCompile Include="tga.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\MultiWindowsPorsche\glm.h">
+    <ClInclude Include="tga.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

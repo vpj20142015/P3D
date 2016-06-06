@@ -86,9 +86,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tga.cpp" />
+    <ClCompile Include="VideoFaceDetector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tga.h" />
+    <ClInclude Include="VideoFaceDetector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

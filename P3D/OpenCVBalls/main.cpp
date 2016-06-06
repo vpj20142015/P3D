@@ -3,17 +3,19 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/video/video.hpp>
 #include <opencv2/video/background_segm.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
 #include "Dependencies\glew\glew.h"
 #include "Dependencies\freeglut\freeglut.h"
 #include <math.h>
 #include "tga.h"
+#include "VideoFaceDetector.h"
 
 #define _DMESH
 
 using namespace cv;
 using namespace std;
 
-Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2;
+Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2, faceDetection;
 
 Ptr<BackgroundSubtractor> pMOG; //MOG Background subtractor
 
@@ -28,6 +30,9 @@ int iHighV = 255;
 
 bool frameCapturedSuccessfully = false;
 VideoCapture cap(CV_CAP_ANY); //capture the video from web cam
+char *classifierFaces = "haarcascade_frontalface_default.xml";
+char *classifierEyes = "haarcascade_mcs_eyepair_big.xml";
+VideoFaceDetector detector(classifierFaces, cap);
 int width = 640;
 int height = 480;
 
@@ -37,7 +42,7 @@ int circleRadius = 2;
 int myDL;
 
 //Modos existentes: position tracking e augmented reality
-int demoModes = 2;
+int demoModes = 3;
 //Modo current
 int demoMode = 1;
 
@@ -54,6 +59,63 @@ GLuint textures[2];
 //Usado para implementar um rolling moving average de modo a limpar o sinal 
 float newValuesWeight = 1.0;
 float accumulatorX = 0, accumulatorY = 0, accumulatorZ = 0;
+
+//Para deteção de faces e olhos
+String face_cascade_name = "haarcascade_frontalface_alt.xml";
+String eyes_cascade_name = "haarcascade_mcs_eyepair_big.xml";
+CascadeClassifier face_cascade;
+CascadeClassifier eyes_cascade;
+double min_face_size = 20;
+double max_face_size = 200;
+Rect faceRectangle;
+Point facePosition;
+
+void detectFaces(Mat frame)
+{
+	std::vector<Rect> faces;
+	Mat frame_gray;
+
+	cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+	equalizeHist(frame_gray, frame_gray);
+
+	//-- Detect faces
+	face_cascade.detectMultiScale(frame_gray, faces, 1.2, 2, 0 | CV_HAAR_SCALE_IMAGE, Size(min_face_size, min_face_size), Size(max_face_size, max_face_size));
+
+	//for (size_t i = 0; i < faces.size(); i++)
+	//{
+	//	Point center(faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5);
+
+	//	faceRectangle = Rect(center.x - faces[i].width*0.5,
+	//		center.y - faces[i].height*0.5 - faces[i].height*0.25,
+	//		faces[i].width,
+	//		faces[i].height + faces[i].height*0.35);
+
+	//	rectangle(frame, faceRectangle, Scalar(0, 0, 255), 1, 8, 0);
+
+	//	//ellipse(frame, center, Size(faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
+
+	//}
+
+	for (int i = 0; i < faces.size(); i++)
+	{
+		//Atualizar os valores de min e max
+		min_face_size = faces[0].width*0.8;
+		max_face_size = faces[0].width*1.2;
+
+		//Definir o centro da face
+		Point center(faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5);
+
+		//Desenhar um rectangulo à volta da face
+		faceRectangle = Rect(center.x - faces[i].width*0.5,
+				center.y - faces[i].height*0.5 - faces[i].height*0.25,
+				faces[i].width,
+				faces[i].height + faces[i].height*0.35);
+
+		rectangle(frame, faceRectangle, Scalar(0, 0, 255), 1, 8, 0);
+	}
+
+	faceDetection = frame;
+}
 
 void load_tga_image(std::string nome, GLuint texture, bool transparency)
 {
@@ -391,7 +453,6 @@ void HoughDetection(Mat& src_gray, Mat& src_display)
 				largest_area = a;
 				largest_contour_index = i;                //Store the index of largest contour
 			}
-
 		}
 
 		//cout << largest_contour_index << endl << endl;
@@ -497,24 +558,24 @@ void display()
 	// read a new frame from video
 	if (frameCapturedSuccessfully) //if not success, break loop
 	{
+		if (demoMode == 0 || demoMode == 1){
+			cvtColor(frameOriginal, frameHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
-		cvtColor(frameOriginal, frameHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+			//Filtrar para deixar apenas coisas avermelhadas
+			OrangeFilter(frameHSV, frameFiltered);
 
-		//Filtrar para deixar apenas coisas avermelhadas
-		OrangeFilter(frameHSV, frameFiltered);
+			//Retirar o background
+			pMOG->operator()(frameFiltered, fgMaskMOG);
 
-		//Retirar o background
-		pMOG->operator()(frameFiltered, fgMaskMOG);
+			//Blur para suavizar as fronteiras
+			GaussianBlur(fgMaskMOG, frameFiltered, Size(9, 9), 4, 4);
 
-		//Blur para suavizar as fronteiras
-		GaussianBlur(fgMaskMOG, frameFiltered, Size(9, 9), 4, 4);
+			flip(frameFiltered, controlFlipped, 1);
+			imshow("Control", controlFlipped);
 
-		flip(frameFiltered, controlFlipped, 1);
-		imshow("Control", controlFlipped);
-
-		//runs the detection, and update the display
-		HoughDetection(frameFiltered, frameOriginal);
-
+			//runs the detection, and update the display
+			HoughDetection(frameFiltered, frameOriginal);
+		}
 	}
 	else{
 		cout << "No frame captured!" << endl;
@@ -534,12 +595,6 @@ void display()
 	switch (demoMode)
 	{
 	case 0:
-		/////////////////////////////////////////////////////////////////////////////////
-		// Drawing routine
-
-		//now that the camera params have been set, draw your 3D shapes
-		//first, save the current matrix
-
 		glDisable(GL_TEXTURE_2D);
 
 		//set projection matrix using intrinsic camera params
@@ -667,6 +722,26 @@ void display()
 		if (spin > 360.0) spin = spin - 360.0;
 
 		break;
+	case 2:{
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glDisable(GL_TEXTURE_2D);
+
+		//Deteta as faces e olhos
+		//detectFaces(frameOriginal);
+
+		cv::rectangle(frameOriginal, detector.face(), cv::Scalar(255, 0, 0));
+		cv::circle(frameOriginal, detector.facePosition(), 30, cv::Scalar(0, 255, 0));
+
+		////Desenha o resultado da deteção
+		flip(frameOriginal, tempimage, 0);
+		flip(tempimage, tempimage2, 1);
+		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
+
+		
+
+		break;
+	}
 	default:
 		break;
 	}
@@ -717,7 +792,13 @@ void keyboard(unsigned char key, int x, int y)
 void idle()
 {
 	// grab a frame from the camera
-	frameCapturedSuccessfully = cap.read(frameOriginal);
+	if (demoMode == 2){
+		detector >> frameOriginal;
+	}
+	else{
+		frameCapturedSuccessfully = cap.read(frameOriginal);
+	}
+	
 }
 
 int main(int argc, char** argv)
@@ -748,6 +829,10 @@ int main(int argc, char** argv)
 	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("OpenGL / OpenCV Example");
+
+	//-- 1. Load the cascades
+	if (!face_cascade.load(face_cascade_name)){ printf("--(!)Error loading\n"); return -1; };
+	if (!eyes_cascade.load(eyes_cascade_name)){ printf("--(!)Error loading\n"); return -1; };
 
 	// Inicializações
 	init();

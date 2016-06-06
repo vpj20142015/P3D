@@ -21,9 +21,15 @@
     <ClCompile Include="tga.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VideoFaceDetector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tga.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFaceDetector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

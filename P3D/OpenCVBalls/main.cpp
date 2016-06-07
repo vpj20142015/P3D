@@ -55,6 +55,7 @@ float raioOrbita = 0.1;
 float periodoOrbital = 1.0;
 float moonOrbitIterator = 0;
 GLuint textures[2];
+GLuint faceDetectionTextures[1];
 
 //Usado para implementar um rolling moving average de modo a limpar o sinal 
 float newValuesWeight = 1.0;
@@ -679,15 +680,71 @@ void display()
 		//Deteta as faces e olhos
 		//detectFaces(frameOriginal);
 
-		cv::rectangle(frameOriginal, detector.face(), cv::Scalar(255, 0, 0));
-		cv::circle(frameOriginal, detector.facePosition(), 30, cv::Scalar(0, 255, 0));
+		//Debug - desenhar o rectangulo e centro de deteção de face
+		/*cv::rectangle(frameOriginal, detector.face(), cv::Scalar(255, 0, 0));
+		cv::circle(frameOriginal, detector.facePosition(), 30, cv::Scalar(0, 255, 0));*/
 
 		////Desenha o resultado da deteção
 		flip(frameOriginal, tempimage, 0);
 		flip(tempimage, tempimage2, 1);
 		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
 
-		
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho((float)width / (float)height, (float)-width / (float)height, -1, 1, -100, 100);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glEnable(GL_TEXTURE_2D);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+
+		glBindTexture(GL_TEXTURE_2D, faceDetectionTextures[0]);
+
+		applymaterial(0);
+
+		applylights();
+
+		glPushMatrix();
+		Rect face = detector.face();
+		Point facePos = detector.facePosition();
+
+		//Escrever valores
+		//cout << face.width << " x " << face.height << endl;
+
+		//Dar a escala correcta à textura aplicada
+		float scale = RangeAToRangeB((float)face.width, 80, 420, 0.05, 1.5, 1);
+		glScalef(scale, scale, 0);
+
+		//Escrever valores
+		//cout << facePos.x << " x " << facePos.y << endl;
+
+		//Colocar a textura no sitio certo
+		float faceCenterX = RangeAToRangeB((float)facePos.x, 10, 640, -width / 2.0, width / 2.0, 150);
+		float faceCenterY = -RangeAToRangeB((float)facePos.y, 40, 480, -height / 2.0, height / 2.0, 150);
+
+		//cout << faceCenterX << " x " << faceCenterY << endl << endl;
+
+		glTranslatef(faceCenterX, faceCenterY, 0);
+
+		//Desenhar a textura num quad
+		glBegin(GL_QUADS);
+			glTexCoord2f(0.0f, 0.0f);
+			glVertex3f(-1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 0.0f); // sempre 1.0f se quiser aplicar toda a textura
+			glVertex3f(1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 1.0f);
+			glVertex3f(1.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f);
+			glVertex3f(-1.0f, 1.0f, 0.0f);
+		glEnd();
+		glPopMatrix();
 
 		break;
 	}
@@ -782,9 +839,14 @@ int main(int argc, char** argv)
 	// Inicializações
 	init();
 	initLights();
+	//Texturas para o planeta e lua
 	glGenTextures(2, textures);
 	load_tga_image("earth", textures[0], false);
 	load_tga_image("moon", textures[1], false);
+	//Texturas para sobrepor à face detetada
+	glGenTextures(1, faceDetectionTextures);
+	load_tga_image("mrt", faceDetectionTextures[0], true);
+
 
 	// set up GUI callback functions
 	glutDisplayFunc(display);

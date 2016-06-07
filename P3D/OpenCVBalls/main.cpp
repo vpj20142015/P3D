@@ -720,9 +720,14 @@ void display()
 		//Escrever valores
 		cout << face.width << endl;
 
-		//Dar a escala correcta à textura aplicada
 		float scale = RangeAToRangeB((float)face.width, 80.0, 480.0, 0.35, 1.4, 1.0);
-		glScalef(scale, scale, 0);
+
+		newValuesWeight = 0.3;
+		accumulatorZ = (newValuesWeight * scale) + (1.0 - newValuesWeight) * accumulatorZ;
+
+		//Dar a escala correcta à textura aplicada
+		
+		glScalef(accumulatorZ, accumulatorZ, 0);
 
 		//Escrever valores
 		//cout << facePos.x << " x " << facePos.y << endl;
@@ -731,11 +736,14 @@ void display()
 		float faceCenterX = RangeAToRangeB((float)facePos.x, 10, 640, -width / 2.0, width / 2.0, 180);
 		float faceCenterY = -RangeAToRangeB((float)facePos.y, 40, 480, -height / 2.0, height / 2.0, 180);
 
-		//glScalef(scale, scale, 0);
+		newValuesWeight = 0.5;
+
+		accumulatorX = (newValuesWeight * faceCenterX) + (1.0 - newValuesWeight) * accumulatorX;
+		accumulatorY = (newValuesWeight * faceCenterY) + (1.0 - newValuesWeight) * accumulatorY;
 
 		//cout << faceCenterX << " x " << faceCenterY << endl << endl;
 
-		glTranslatef(faceCenterX, faceCenterY, 0);
+		glTranslatef(accumulatorX, accumulatorY, 0);
 
 		//Desenhar a textura num quad
 		glBegin(GL_QUADS);

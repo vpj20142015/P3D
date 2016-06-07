@@ -8,6 +8,7 @@
 #include <math.h>
 #include "tga.h"
 
+
 #define _DMESH
 
 using namespace cv;

@@ -716,18 +716,20 @@ void display()
 		Point facePos = detector.facePosition();
 
 		//Escrever valores
-		//cout << face.width << " x " << face.height << endl;
+		cout << face.width << endl;
 
 		//Dar a escala correcta à textura aplicada
-		float scale = RangeAToRangeB((float)face.width, 80, 420, 0.05, 1.5, 1);
+		float scale = RangeAToRangeB((float)face.width, 80.0, 480.0, 0.35, 1.4, 1.0);
 		glScalef(scale, scale, 0);
 
 		//Escrever valores
 		//cout << facePos.x << " x " << facePos.y << endl;
 
 		//Colocar a textura no sitio certo
-		float faceCenterX = RangeAToRangeB((float)facePos.x, 10, 640, -width / 2.0, width / 2.0, 150);
-		float faceCenterY = -RangeAToRangeB((float)facePos.y, 40, 480, -height / 2.0, height / 2.0, 150);
+		float faceCenterX = RangeAToRangeB((float)facePos.x, 10, 640, -width / 2.0, width / 2.0, 180);
+		float faceCenterY = -RangeAToRangeB((float)facePos.y, 40, 480, -height / 2.0, height / 2.0, 180);
+
+		//glScalef(scale, scale, 0);
 
 		//cout << faceCenterX << " x " << faceCenterY << endl << endl;
 
@@ -845,7 +847,7 @@ int main(int argc, char** argv)
 	load_tga_image("moon", textures[1], false);
 	//Texturas para sobrepor à face detetada
 	glGenTextures(1, faceDetectionTextures);
-	load_tga_image("mrt", faceDetectionTextures[0], true);
+	load_tga_image("ironman", faceDetectionTextures[0], true);
 
 
 	// set up GUI callback functions

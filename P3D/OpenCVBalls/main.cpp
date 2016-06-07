@@ -3,10 +3,12 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/video/video.hpp>
 #include <opencv2/video/background_segm.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
 #include "Dependencies\glew\glew.h"
 #include "Dependencies\freeglut\freeglut.h"
 #include <math.h>
 #include "tga.h"
+#include "VideoFaceDetector.h"
 
 
 #define _DMESH
@@ -14,7 +16,7 @@
 using namespace cv;
 using namespace std;
 
-Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2;
+Mat frameOriginal, frameHSV, frameFiltered, frameFlipped, fgMaskMOG, controlFlipped, tempimage, tempimage2, faceDetection;
 
 Ptr<BackgroundSubtractor> pMOG; //MOG Background subtractor
 
@@ -29,6 +31,9 @@ int iHighV = 255;
 
 bool frameCapturedSuccessfully = false;
 VideoCapture cap(CV_CAP_ANY); //capture the video from web cam
+char *classifierFaces = "haarcascade_frontalface_default.xml";
+char *classifierEyes = "haarcascade_mcs_eyepair_big.xml";
+VideoFaceDetector detector(classifierFaces, cap);
 int width = 640;
 int height = 480;
 
@@ -38,7 +43,7 @@ int circleRadius = 2;
 int myDL;
 
 //Modos existentes: position tracking e augmented reality
-int demoModes = 2;
+int demoModes = 3;
 //Modo current
 int demoMode = 1;
 
@@ -51,10 +56,19 @@ float raioOrbita = 0.1;
 float periodoOrbital = 1.0;
 float moonOrbitIterator = 0;
 GLuint textures[2];
+const int nFacetextures = 4;
+GLuint faceDetectionTextures[nFacetextures];
+int faceTextureAtual = 0;
 
 //Usado para implementar um rolling moving average de modo a limpar o sinal 
 float newValuesWeight = 1.0;
 float accumulatorX = 0, accumulatorY = 0, accumulatorZ = 0;
+
+//Para deteção de faces e olhos
+//VideoFaceDetector.h/cpp encontrado aqui:
+//https://github.com/mc-jesus/face_detect_n_track
+Rect faceRectangle;
+Point facePosition;
 
 void load_tga_image(std::string nome, GLuint texture, bool transparency)
 {
@@ -392,7 +406,6 @@ void HoughDetection(Mat& src_gray, Mat& src_display)
 				largest_area = a;
 				largest_contour_index = i;                //Store the index of largest contour
 			}
-
 		}
 
 		//cout << largest_contour_index << endl << endl;
@@ -498,24 +511,24 @@ void display()
 	// read a new frame from video
 	if (frameCapturedSuccessfully) //if not success, break loop
 	{
+		if (demoMode == 0 || demoMode == 1){
+			cvtColor(frameOriginal, frameHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
-		cvtColor(frameOriginal, frameHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+			//Filtrar para deixar apenas coisas avermelhadas
+			OrangeFilter(frameHSV, frameFiltered);
 
-		//Filtrar para deixar apenas coisas avermelhadas
-		OrangeFilter(frameHSV, frameFiltered);
+			//Retirar o background
+			pMOG->operator()(frameFiltered, fgMaskMOG);
 
-		//Retirar o background
-		pMOG->operator()(frameFiltered, fgMaskMOG);
+			//Blur para suavizar as fronteiras
+			GaussianBlur(fgMaskMOG, frameFiltered, Size(9, 9), 4, 4);
 
-		//Blur para suavizar as fronteiras
-		GaussianBlur(fgMaskMOG, frameFiltered, Size(9, 9), 4, 4);
+			flip(frameFiltered, controlFlipped, 1);
+			imshow("Control", controlFlipped);
 
-		flip(frameFiltered, controlFlipped, 1);
-		imshow("Control", controlFlipped);
-
-		//runs the detection, and update the display
-		HoughDetection(frameFiltered, frameOriginal);
-
+			//runs the detection, and update the display
+			HoughDetection(frameFiltered, frameOriginal);
+		}
 	}
 	else{
 		cout << "No frame captured!" << endl;
@@ -535,12 +548,6 @@ void display()
 	switch (demoMode)
 	{
 	case 0:
-		/////////////////////////////////////////////////////////////////////////////////
-		// Drawing routine
-
-		//now that the camera params have been set, draw your 3D shapes
-		//first, save the current matrix
-
 		glDisable(GL_TEXTURE_2D);
 
 		//set projection matrix using intrinsic camera params
@@ -668,6 +675,92 @@ void display()
 		if (spin > 360.0) spin = spin - 360.0;
 
 		break;
+	case 2:{
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glDisable(GL_TEXTURE_2D);
+
+		//Deteta as faces e olhos
+		//detectFaces(frameOriginal);
+
+		//Debug - desenhar o rectangulo e centro de deteção de face
+		/*cv::rectangle(frameOriginal, detector.face(), cv::Scalar(255, 0, 0));
+		cv::circle(frameOriginal, detector.facePosition(), 30, cv::Scalar(0, 255, 0));*/
+
+		////Desenha o resultado da deteção
+		flip(frameOriginal, tempimage, 0);
+		flip(tempimage, tempimage2, 1);
+		glDrawPixels(tempimage2.size().width, tempimage2.size().height, GL_BGR, GL_UNSIGNED_BYTE, tempimage2.ptr());
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho((float)width / (float)height, (float)-width / (float)height, -1, 1, -100, 100);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glEnable(GL_TEXTURE_2D);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glColor4f(1.0, 1.0, 1.0, 1.0);
+
+		glBindTexture(GL_TEXTURE_2D, faceDetectionTextures[faceTextureAtual]);
+
+		applymaterial(0);
+
+		applylights();
+
+		glPushMatrix();
+		Rect face = detector.face();
+		Point facePos = detector.facePosition();
+
+		//Escrever valores
+		cout << face.width << endl;
+
+		float scale = RangeAToRangeB((float)face.width, 80.0, 480.0, 0.35, 1.4, 1.0);
+
+		newValuesWeight = 0.3;
+		accumulatorZ = (newValuesWeight * scale) + (1.0 - newValuesWeight) * accumulatorZ;
+
+		//Dar a escala correcta à textura aplicada
+		
+		glScalef(accumulatorZ, accumulatorZ, 0);
+
+		//Escrever valores
+		//cout << facePos.x << " x " << facePos.y << endl;
+
+		//Colocar a textura no sitio certo
+		float faceCenterX = RangeAToRangeB((float)facePos.x, 10, 640, -width / 2.0, width / 2.0, 180);
+		float faceCenterY = -RangeAToRangeB((float)facePos.y, 40, 480, -height / 2.0, height / 2.0, 180);
+
+		newValuesWeight = 0.5;
+
+		accumulatorX = (newValuesWeight * faceCenterX) + (1.0 - newValuesWeight) * accumulatorX;
+		accumulatorY = (newValuesWeight * faceCenterY) + (1.0 - newValuesWeight) * accumulatorY;
+
+		//cout << faceCenterX << " x " << faceCenterY << endl << endl;
+
+		glTranslatef(accumulatorX, accumulatorY, 0);
+
+		//Desenhar a textura num quad
+		glBegin(GL_QUADS);
+			glTexCoord2f(0.0f, 0.0f);
+			glVertex3f(-1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 0.0f); // sempre 1.0f se quiser aplicar toda a textura
+			glVertex3f(1.0f, -1.0f, 0.0f);
+			glTexCoord2f(1.0f, 1.0f);
+			glVertex3f(1.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f);
+			glVertex3f(-1.0f, 1.0f, 0.0f);
+		glEnd();
+		glPopMatrix();
+
+		break;
+	}
 	default:
 		break;
 	}
@@ -710,6 +803,11 @@ void keyboard(unsigned char key, int x, int y)
 		accumulatorY = 0;
 		accumulatorZ = 0;
 		break;
+	case 'n':
+		faceTextureAtual += 1;
+		if (faceTextureAtual > nFacetextures){
+			faceTextureAtual = 0;
+		}
 	default:
 		break;
 	}
@@ -718,7 +816,13 @@ void keyboard(unsigned char key, int x, int y)
 void idle()
 {
 	// grab a frame from the camera
-	frameCapturedSuccessfully = cap.read(frameOriginal);
+	if (demoMode == 2){
+		detector >> frameOriginal;
+	}
+	else{
+		frameCapturedSuccessfully = cap.read(frameOriginal);
+	}
+	
 }
 
 int main(int argc, char** argv)
@@ -753,9 +857,17 @@ int main(int argc, char** argv)
 	// Inicializações
 	init();
 	initLights();
+	//Texturas para o planeta e lua
 	glGenTextures(2, textures);
 	load_tga_image("earth", textures[0], false);
 	load_tga_image("moon", textures[1], false);
+	//Texturas para sobrepor à face detetada
+	glGenTextures(4, faceDetectionTextures);
+	load_tga_image("ironman", faceDetectionTextures[0], true);
+	load_tga_image("mrt", faceDetectionTextures[1], true);
+	load_tga_image("lion", faceDetectionTextures[2], true);
+	load_tga_image("hitler", faceDetectionTextures[3], true);
+
 
 	// set up GUI callback functions
 	glutDisplayFunc(display);

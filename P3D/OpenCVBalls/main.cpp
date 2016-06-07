@@ -55,7 +55,9 @@ float raioOrbita = 0.1;
 float periodoOrbital = 1.0;
 float moonOrbitIterator = 0;
 GLuint textures[2];
-GLuint faceDetectionTextures[1];
+const int nFacetextures = 4;
+GLuint faceDetectionTextures[nFacetextures];
+int faceTextureAtual = 0;
 
 //Usado para implementar um rolling moving average de modo a limpar o sinal 
 float newValuesWeight = 1.0;
@@ -705,7 +707,7 @@ void display()
 
 		glColor4f(1.0, 1.0, 1.0, 1.0);
 
-		glBindTexture(GL_TEXTURE_2D, faceDetectionTextures[0]);
+		glBindTexture(GL_TEXTURE_2D, faceDetectionTextures[faceTextureAtual]);
 
 		applymaterial(0);
 
@@ -792,6 +794,11 @@ void keyboard(unsigned char key, int x, int y)
 		accumulatorY = 0;
 		accumulatorZ = 0;
 		break;
+	case 'n':
+		faceTextureAtual += 1;
+		if (faceTextureAtual > nFacetextures){
+			faceTextureAtual = 0;
+		}
 	default:
 		break;
 	}
@@ -846,8 +853,11 @@ int main(int argc, char** argv)
 	load_tga_image("earth", textures[0], false);
 	load_tga_image("moon", textures[1], false);
 	//Texturas para sobrepor à face detetada
-	glGenTextures(1, faceDetectionTextures);
+	glGenTextures(4, faceDetectionTextures);
 	load_tga_image("ironman", faceDetectionTextures[0], true);
+	load_tga_image("mrt", faceDetectionTextures[1], true);
+	load_tga_image("lion", faceDetectionTextures[2], true);
+	load_tga_image("hitler", faceDetectionTextures[3], true);
 
 
 	// set up GUI callback functions

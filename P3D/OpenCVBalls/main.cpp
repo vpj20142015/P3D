@@ -1,6 +1,7 @@
 #include <iostream>
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/features2d/features2d.hpp>
 #include <opencv2/video/video.hpp>
 #include <opencv2/video/background_segm.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
@@ -505,6 +506,7 @@ float RangeAToRangeB(float input, float input_start, float input_end, float outp
 
 void display()
 {
+	
 	// clear the window
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -528,12 +530,18 @@ void display()
 
 			//runs the detection, and update the display
 			HoughDetection(frameFiltered, frameOriginal);
+			
+			
 		}
-	}
-	else{
-		cout << "No frame captured!" << endl;
+	
 	}
 
+	else{
+		cout << "No frame captured!" << endl;
+
+
+	}
+	
 	//////////////////////////////////////////////////////////////////////////////////
 	// Here, set up new parameters to render a scene viewed from the camera.
 
@@ -541,7 +549,8 @@ void display()
 	//glViewport(0, 0, frameFlipped.size().width, frameFlipped.size().height);
 	glViewport(0, 0, width, height);
 
-
+	string text;
+	stringstream sstm;
 	float zoomRange = 0;
 	float x = 0, y = 0, z = 0;
 	float raioOrbitaAtual = 0;
@@ -666,6 +675,9 @@ void display()
 
 		//Endireitar os planetas
 		//glRotatef(-90.0, 1.0, 0.0, 0.0);
+		
+		//supostamente e isto qe se usa para desenhar texto nas imagens
+		
 
 		gluSphere(mysolid, (circleRadius / (height / 2.0)) / 2.0, 64, 64);
 
@@ -764,7 +776,7 @@ void display()
 	default:
 		break;
 	}
-
+	
 	// show the rendering on the screen
 	glutSwapBuffers();
 
@@ -812,6 +824,42 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	}
 }
+void renderScene()
+{
+	int i, widht, height;
+	char str[] = "isto e um teste";
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	glLineWidth(2.0);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
+
+	widht = glutGet(GLUT_WINDOW_WIDTH);
+	height = glutGet(GLUT_WINDOW_HEIGHT);
+	glViewport(0, 0, widht, height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0.0, (double)widht, 0.0, (double)height);
+
+
+	glTranslatef(0.0f, (float)height, 0.0f);
+
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glTranslatef(0.0, (float)-glutStrokeWidth(GLUT_STROKE_ROMAN, str[0]), 0.0f);
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glScalef(0.125, 0.125, 0.125);
+	for (i = 0; i < strlen(str); i++)glutStrokeCharacter(GLUT_STROKE_ROMAN, str[i]);
+	glFlush();
+
+}
 
 void idle()
 {
@@ -825,6 +873,39 @@ void idle()
 	
 }
 
+
+
+void detectAndDisplay(Mat frame);
+
+void cvAddText()
+{
+	CvFont font;
+	double hScale = 1.0;
+	double vScale = 1.0;
+	int    lineWidth = 1;
+	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX | CV_FONT_ITALIC, hScale, vScale, 0, lineWidth);
+
+	Mat img = imread("mete se aki alguma coisa", CV_LOAD_IMAGE_UNCHANGED);
+
+	/*tou na duvida no qe tenho de meter no img*/
+	cvPutText(imread, "Texto exemplo", cvPoint(200, 400), &font, cvScalar(255, 255, 0));
+
+	/*outras fontes CV_FONT_HERSHEY_SIMPLEX, CV_FONT_HERSHEY_PLAIN,
+CV_FONT_HERSHEY_DUPLEX, CV_FONT_HERSHEY_COMPLEX,
+CV_FONT_HERSHEY_TRIPLEX, CV_FONT_HERSHEY_COMPLEX_SMALL,
+CV_FONT_HERSHEY_SCRIPT_SIMPLEX, CV_FONT_HERSHEY_SCRIPT_COMPLEX,*/
+}
+
+/*isto era outro metodo
+void ApresentarTexto(Mat image, char* window_name, RNG rng)
+{
+	Size textsize = getTextSize("OpenCV forever!", CV_FONT_HERSHEY_COMPLEX, 3, 5, 0);
+	Point org((width - textsize.width) / 2, (height - textsize.height) / 2);
+	int lineType = 8;
+
+	
+	
+}*/
 int main(int argc, char** argv)
 {
 	if (!cap.isOpened())  // if not success, exit program
@@ -832,6 +913,7 @@ int main(int argc, char** argv)
 		cout << "Cannot open the web cam" << endl;
 		return -1;
 	}
+
 
 	pMOG = new BackgroundSubtractorMOG(); //MOG approach
 
@@ -846,7 +928,7 @@ int main(int argc, char** argv)
 
 	cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
 	cvCreateTrackbar("HighV", "Control", &iHighV, 255);
-
+	
 	// initialize GLUT
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGBA);
